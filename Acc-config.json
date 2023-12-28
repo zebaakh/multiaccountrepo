@@ -1,0 +1,17 @@
+[
+    {"ParameterKey":"TeamName","ParameterValue": "AWSDevOps"},
+    {"ParameterKey":"ApplicationName","ParameterValue": "CodeDeployApp"},
+    {"ParameterKey":"RepoName","ParameterValue": "MultiAccCodePipelineRepoName"},
+    {"ParameterKey":"BucketName","ParameterValue": "multiacartifactbucket"},
+    {"ParameterKey":"SQSStackName","ParameterValue": "sqsqueu1stack1"},
+    {"ParameterKey":"S3StackName","ParameterValue": "s3stack1"},
+    {"ParameterKey":"GlueStackName","ParameterValue": "gluestack1"},
+    {"ParameterKey":"LambdaStackName","ParameterValue": "lambdastack1"},
+    {"ParameterKey":"MapingStackName","ParameterValue": "mapingstack1"},
+    {"ParameterKey":"AthenaStackName","ParameterValue": "athenastack1"},
+    {"ParameterKey":"PipelineName","ParameterValue": "MultiAccCICDPipeline"},
+    {"ParameterKey":"CMKARN","ParameterValue": "arn:aws:kms:us-east-1:971996090633:key/923789b8-a3d9-46d2-9e76-b8b2b5292b35"},
+    {"ParameterKey":"SrcAccId","ParameterValue": "971996090633"},
+    {"ParameterKey":"DestAccId","ParameterValue": "932184789785"}
+]
+

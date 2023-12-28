@@ -1,0 +1,14 @@
+[
+    {
+        "ParameterKey": "MultiAccCodeDeployAppName",
+        "ParameterValue": "MultiAccCodeDeployApplication"
+    },
+    {
+        "ParameterKey": "EnvironmentTag",
+        "ParameterValue": "Developement"
+    },
+    {
+        "ParameterKey": "NameTag",
+        "ParameterValue": "CodeDeploy App"
+    }
+]

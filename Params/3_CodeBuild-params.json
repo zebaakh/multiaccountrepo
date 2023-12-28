@@ -1,0 +1,18 @@
+[
+    {
+        "ParameterKey": "MultiAccBuildProjectName",
+        "ParameterValue": "MultiAccCodeBuildProject"
+    },
+    {
+        "ParameterKey": "CMKARN",
+        "ParameterValue": "arn:aws:kms:us-east-1:971996090633:key/923789b8-a3d9-46d2-9e76-b8b2b5292b35"
+    },
+    {
+        "ParameterKey": "EnvironmentTag",
+        "ParameterValue": "Developement"
+    },
+    {
+        "ParameterKey": "NameTag",
+        "ParameterValue": "Codebuild project"
+    }
+]

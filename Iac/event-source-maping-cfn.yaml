@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template for Lambda Sample.
+Resources:
+  Queue1ToLambda1EventSourceMapping:
+    Type: 'AWS::Lambda::EventSourceMapping'
+    Properties:
+      EventSourceArn: !ImportValue Queue1Arn
+      FunctionName: !ImportValue Lambda1
+      
+  Queue2ToLambda2EventSourceMapping:
+    Type: 'AWS::Lambda::EventSourceMapping'
+    Properties:
+      EventSourceArn: !ImportValue Queue2Arn
+      FunctionName: !ImportValue Lambda2
+
+  Queue2ToLambda3EventSourceMapping:
+    Type: 'AWS::Lambda::EventSourceMapping'
+    Properties:
+      EventSourceArn: !ImportValue Queue2Arn
+      FunctionName: !ImportValue Lambda3

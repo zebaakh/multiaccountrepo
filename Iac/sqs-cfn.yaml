@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: CloudFormation template with YAML - SQS Definition
+Parameters:
+  Queue1Name:
+    Type: String
+    Default: ""
+    Description: Name of the first SQS queue
+
+  Queue2Name:
+    Type: String
+    Default: "aws-poc-cicd-queue-2"
+    Description: Name of the second SQS queue
+
+  Lambda1FunctionName:
+    Type: String
+    Default: ""
+    Description: Name for Lambda function 1
+
+  SourceBucketName:
+    Type: String
+    Default: ""
+    Description: Name for source bucket
+  EnvironmentTag:
+    Type: String
+    Default: ""
+  Queue1Tag:
+    Type: String
+    Default: ""
+  Queue2Tag:
+    Type: String
+    Default: ""
+
+Resources:
+  Queue1:
+    Type: AWS::SQS::Queue
+    Properties: 
+      QueueName: !Ref Queue1Name
+      Tags: 
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Name
+          Value: !Ref Queue1Tag
+
+  Queue2:
+    Type: AWS::SQS::Queue
+    Properties: 
+      QueueName: !Ref Queue2Name
+      Tags: 
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Name
+          Value: !Ref Queue2Tag
+
+  LambdaToQueuePermission:
+    Type: AWS::SQS::QueuePolicy
+    DependsOn:
+        - Queue2
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: 
+              Service: 'lambda.amazonaws.com'
+            Action: sqs:SendMessage
+            Resource: !GetAtt Queue2.Arn
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub 'arn:aws:lambda:::${Lambda1FunctionName}'
+      Queues:
+        - !Ref Queue2
+
+  BucketToQueuePermission:
+    Type: AWS::SQS::QueuePolicy
+    DependsOn:
+       - Queue1
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: 
+              Service: 's3.amazonaws.com'
+            Action: sqs:SendMessage
+            Resource: !GetAtt Queue1.Arn
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub 'arn:aws:s3:::${SourceBucketName}'
+      Queues:
+        - !Ref Queue1
+   
+Outputs:
+  Queue1:
+    Description: SQS queue1 name
+    Value: !Ref Queue1
+    Export:
+      Name: Queue1
+
+  Queue1Name:
+    Description: SQS queue1 name
+    Value: !Ref Queue1Name
+    Export:
+      Name: Queue1Name
+
+  Queue2Name:
+    Description: SQS queue2 name
+    Value: !Ref Queue2Name
+    Export:
+      Name: Queue2Name
+
+  Queue2:
+    Description: SQS queue2 name
+    Value: !Ref Queue2
+    Export:
+      Name: Queue2
+
+  Queue1Arn:
+    Description: SQS Queue1Arn details
+    Value: !GetAtt Queue1.Arn
+    Export:
+      Name: Queue1Arn
+  Queue2Arn:
+    Description: SQS Queue2Arn details
+    Value: !GetAtt Queue2.Arn
+    Export:
+      Name: Queue2Arn

@@ -1,0 +1,344 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template to create CodePipeline with associated rules and Policies
+
+Parameters:
+  TeamName:
+    Type: String
+    Description: Name of the Team
+  PipelineName:
+    Type: String
+    Description: Name of the Pipeline
+  ApplicationName:
+    Type: String
+    Description: Name of the Application 
+  RepoName:
+    Type: String
+    Description: Name of the CodeCommit Repo
+  BucketName:
+    Type: String
+    Description: Bucket where the artifact can be found.
+  SQSStackName:
+    Type: String
+    Description: SQS stack name.
+  S3StackName:
+    Type: String
+    Description: S3 stack name.
+  GlueStackName:
+    Type: String
+    Description: Glue stack name.
+  LambdaStackName:
+    Type: String
+    Description: Lambda stack name.
+  MapingStackName:
+    Type: String
+    Description: Maping stack name.
+  AthenaStackName:
+    Type: String
+    Description: Athena stack name.
+  CMKARN:
+    Description: ARN of the KMS CMK.
+    Type: String
+  EnvironmentTag:
+    Type: String
+    Default: ""
+  NameTag:
+    Type: String
+    Default: ""
+  SrcAccId:
+    Type: String
+    Description: Acc Id of bdc practice
+  DestAccId:
+    Type: String
+    Description: Destination Account Id
+
+Resources:
+  MultiAccPipelineRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: MultiAccPipelineRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: "MultiAccPipelineAccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - "s3:DeleteObject"
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                  - "s3:ListBucket"
+                  - "s3:PutObject"
+                  - "s3:GetBucketPolicy"
+                  - "s3:*"
+                Resource:
+                  - !Sub 
+                    - arn:aws:s3:::${MultiAccPipelineArtifactBucket}/*
+                    - MultiAccPipelineArtifactBucket: !ImportValue MultiAccPipelineArtifactBucket
+                  - !Sub 
+                    - arn:aws:s3:::${MultiAccPipelineArtifactBucket}
+                    - MultiAccPipelineArtifactBucket: !ImportValue MultiAccPipelineArtifactBucket
+              - Effect: "Allow"
+                Action:
+                  - "sns:Publish"
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'cloudformation:CreateStack'  
+                  - 'cloudformation:UpdateStack'  
+                  - 'cloudformation:DescribeStacks'  
+                  - 'cloudformation:DescribeStackEvents'  
+                  - 'cloudformation:DescribeChangeSet'  
+                  - 'cloudformation:ExecuteChangeSet'  
+                Resource: '*'
+              - Effect: "Allow"
+                Action:
+                  - "codecommit:ListBranches"
+                  - "codecommit:ListRepositories"
+                  - "codecommit:BatchGetRepositories"
+                  - "codecommit:Get*"
+                  - "codecommit:GitPull"
+                  - "codecommit:UploadArchive"
+                Resource: !Sub
+                  - arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:${MultiAccCodePipelineRepoName}
+                  - MultiAccCodePipelineRepoName: !ImportValue MultiAccCodePipelineRepoName
+              - Effect: "Allow"
+                Action:
+                  - "codebuild:StartBuild"
+                  - "codebuild:BatchGetBuilds"
+                Resource:
+                  - !Sub
+                    - arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${MultiAccBuildProjectName}
+                    - MultiAccBuildProjectName: !ImportValue MultiAccBuildProjectName
+                  - !Sub
+                    - arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:build/${MultiAccBuildProjectName}:*
+                    - MultiAccBuildProjectName: !ImportValue MultiAccBuildProjectName
+              - Effect: Allow
+                Action:
+                  - 'codedeploy:CreateDeployment'
+                  - 'codedeploy:GetApplicationRevision'
+                  - 'codedeploy:GetDeployment'
+                  - 'codedeploy:GetDeploymentConfig'
+                  - 'codedeploy:RegisterApplicationRevision'
+                Resource: '*'
+              - Effect: "Allow"
+                Action:
+                  - "iam:PassRole"
+                Resource:
+                  - !Sub arn:aws:iam::${SrcAccId}:role/MultiAccPipelineRole
+              - Effect: Allow
+                Action:
+                  - kms:*
+                  - kms:Decrypt
+                Resource: !Ref CMKARN
+
+              - Effect: Allow
+                Action:
+                  - sts:AssumeRole
+                Resource:
+                  - !Sub arn:aws:iam::${DestAccId}:role/cross-account-CF-role
+                  - !Sub arn:aws:iam::${SrcAccId}:role/MultiAccPipelineRole
+
+  CodePipeline:
+    Type: "AWS::CodePipeline::Pipeline"
+    Properties:
+      Name: !Sub MultiAccCICDPipeline
+      RoleArn: !GetAtt [ MultiAccPipelineRole, Arn ]
+      Tags: 
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Name
+          Value: !Ref NameTag
+
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: ApplicationSource
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeCommit
+              OutputArtifacts:
+                - Name: ApplicationOutput
+              Configuration:
+                BranchName: master
+                RepositoryName: !ImportValue MultiAccCodePipelineRepoName
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: CodeBuild
+              InputArtifacts:
+                - Name: ApplicationOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              OutputArtifacts:
+                - Name: CodeBuildArtifact
+              Configuration:
+                ProjectName: !ImportValue MultiAccBuildProjectName
+              RunOrder: 1
+
+        - Name: DeployToTarget
+          Actions:
+           - Name: Deploy_SQS
+             ActionTypeId:
+              Category: Deploy
+              Owner: AWS
+              Version: 1
+              Provider: CloudFormation
+             InputArtifacts:
+              - Name: CodeBuildArtifact
+             Configuration:
+              ActionMode: CREATE_UPDATE
+              Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+              #RoleArn: !Sub arn:aws:iam::932184789785:role/cross-account-CF-role
+              RoleArn: !Sub arn:aws:iam::${DestAccId}:role/cross-account-CF-role
+              StackName: !Ref SQSStackName
+              TemplatePath: CodeBuildArtifact::Iac/sqs-cfn.yaml
+              TemplateConfiguration: CodeBuildArtifact::Params/sqs-param.json
+             #RoleArn: !Sub arn:aws:iam::932184789785:role/CrossAcc-B-Access-Role
+             RoleArn: !Sub arn:aws:iam::${DestAccId}:role/CrossAcc-B-Access-Role
+             RunOrder: 1
+
+        - Name: Deploy_S3
+          Actions:
+           - Name: DeployToDev
+             ActionTypeId:
+              Category: Deploy
+              Owner: AWS
+              Version: 1
+              Provider: CloudFormation
+             InputArtifacts:
+              - Name: CodeBuildArtifact
+             Configuration:
+              ActionMode: CREATE_UPDATE
+              Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+              #RoleArn: !Sub arn:aws:iam::932184789785:role/cross-account-CF-role
+              RoleArn: !Sub arn:aws:iam::${DestAccId}:role/cross-account-CF-role
+              StackName: !Ref S3StackName
+              TemplatePath: CodeBuildArtifact::Iac/s3-cfn.yaml
+              TemplateConfiguration: CodeBuildArtifact::Params/s3-param.json
+             #RoleArn: !Sub arn:aws:iam::932184789785:role/CrossAcc-B-Access-Role
+             RoleArn: !Sub arn:aws:iam::${DestAccId}:role/CrossAcc-B-Access-Role
+             RunOrder: 2
+
+        - Name: Deploy_Glue
+          Actions:
+           - Name: DeployToDev
+             ActionTypeId:
+              Category: Deploy
+              Owner: AWS
+              Version: 1
+              Provider: CloudFormation
+             InputArtifacts:
+              - Name: CodeBuildArtifact
+             Configuration:
+              ActionMode: CREATE_UPDATE
+              Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+              #RoleArn: !Sub arn:aws:iam::932184789785:role/cross-account-CF-role
+              RoleArn: !Sub arn:aws:iam::${DestAccId}:role/cross-account-CF-role
+              StackName: !Ref GlueStackName
+              TemplatePath: CodeBuildArtifact::Iac/glue-cfn.yaml
+              TemplateConfiguration: CodeBuildArtifact::Params/glue-param.json
+             #RoleArn: !Sub arn:aws:iam::932184789785:role/CrossAcc-B-Access-Role
+             RoleArn: !Sub arn:aws:iam::${DestAccId}:role/CrossAcc-B-Access-Role
+             RunOrder: 3	
+
+        - Name: Deploy_Lambda
+          Actions:
+           - Name: DeployToDev
+             ActionTypeId:
+              Category: Deploy
+              Owner: AWS
+              Version: 1
+              Provider: CloudFormation
+             InputArtifacts:
+              - Name: CodeBuildArtifact
+             Configuration:
+              ActionMode: CREATE_UPDATE
+              Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+              #RoleArn: !Sub arn:aws:iam::932184789785:role/cross-account-CF-role
+              RoleArn: !Sub arn:aws:iam::${DestAccId}:role/cross-account-CF-role
+              StackName: !Ref LambdaStackName
+              TemplatePath: CodeBuildArtifact::Iac/lambda-cfn.yaml
+              TemplateConfiguration: CodeBuildArtifact::Params/lambda-param.json
+             #RoleArn: !Sub arn:aws:iam::932184789785:role/CrossAcc-B-Access-Role
+             RoleArn: !Sub arn:aws:iam::${DestAccId}:role/CrossAcc-B-Access-Role
+             RunOrder: 4
+             
+
+        - Name: Deploy_SourceMaping
+          Actions:
+           - Name: DeployToDev
+             ActionTypeId:
+              Category: Deploy
+              Owner: AWS
+              Version: 1
+              Provider: CloudFormation
+             InputArtifacts:
+              - Name: CodeBuildArtifact
+             Configuration:
+              ActionMode: CREATE_UPDATE
+              Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+              #RoleArn: !Sub arn:aws:iam::932184789785:role/cross-account-CF-role
+              RoleArn: !Sub arn:aws:iam::${DestAccId}:role/cross-account-CF-role
+              StackName: !Ref MapingStackName
+              TemplatePath: CodeBuildArtifact::Iac/event-source-maping-cfn.yaml
+             #RoleArn: !Sub arn:aws:iam::932184789785:role/CrossAcc-B-Access-Role
+             RoleArn: !Sub arn:aws:iam::${DestAccId}:role/CrossAcc-B-Access-Role
+             RunOrder: 5
+
+        - Name: Deploy_Athena
+          Actions:
+           - Name: DeployToDev
+             ActionTypeId:
+              Category: Deploy
+              Owner: AWS
+              Version: 1
+              Provider: CloudFormation
+             InputArtifacts:
+              - Name: CodeBuildArtifact
+             Configuration:
+              ActionMode: CREATE_UPDATE
+              Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+              #RoleArn: !Sub arn:aws:iam::932184789785:role/cross-account-CF-role
+              RoleArn: !Sub arn:aws:iam::${DestAccId}:role/cross-account-CF-role
+              StackName: !Ref AthenaStackName
+              TemplatePath: CodeBuildArtifact::Iac/athena-cfn.yaml
+              TemplateConfiguration: CodeBuildArtifact::Params/athena-param.json
+             #RoleArn: !Sub arn:aws:iam::932184789785:role/CrossAcc-B-Access-Role
+             RoleArn: !Sub arn:aws:iam::${DestAccId}:role/CrossAcc-B-Access-Role
+             RunOrder: 6                
+
+            # - Name: ManualApproval
+            #   # :Actions
+            #   #  - Name: ManualApproval
+            #   ActionTypeId:
+            #     Category: Approval
+            #     Owner: AWS
+            #     Version: 1
+            #     Provider: Manual
+            #   # Configuration:
+            #   #   NotificationArn: !Ref CodePipelineSNSTopic
+            #   #   CustomData: Approve Production deployment
+            #   RunOrder: 1
+
+      ArtifactStore:
+        Type: S3
+        Location: !ImportValue MultiAccPipelineArtifactBucket
+        EncryptionKey:
+          Id: !Ref CMKARN
+          Type: KMS

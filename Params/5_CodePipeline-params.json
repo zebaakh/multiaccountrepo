@@ -1,0 +1,14 @@
+[
+{
+        "ParameterKey": "PipelineName",
+        "ParameterValue": "MultiAccCICDPipeline"
+},
+{
+        "ParameterKey": "EnvironmentTag",
+        "ParameterValue": "Developement"
+},
+{
+        "ParameterKey": "NameTag",
+        "ParameterValue": "CICD Codepipeline"
+}
+]

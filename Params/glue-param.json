@@ -1,0 +1,12 @@
+{ 
+  "Parameters": {
+     "GlueJobName": "aws-poc-cicd-glue-job",
+     "GlueScriptLocation": "s3://aws-poc-cicd-glue-script/source/final-glue-script.py",
+     "icebergdatabaseName": "icebergdatabase",
+     "GlueTableName": "icebergtable",
+     "EnvironmentTag": "Developement",
+     "GlueJobTag": "My Glue Job",  
+     "AccId": "932184789785"
+
+  }
+}

@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template to Create an S3 Bucket with versioning
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: S3 Bucket Name
+    Default: ""
+  EnvironmentTag:
+    Type: String
+    Default: ""
+  NameTag:
+    Type: String
+    Default: ""
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      VersioningConfiguration:
+        Status: Enabled
+      Tags: 
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Name
+          Value: !Ref NameTag
+
+Outputs:
+  MultiAccPipelineArtifactBucket:
+    Description: CodePipeline Artifact Bucket Name
+    Value: !Ref BucketName
+    Export:
+      Name: MultiAccPipelineArtifactBucket

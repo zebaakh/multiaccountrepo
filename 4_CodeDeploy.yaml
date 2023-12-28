@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template to Create CodeDeploy App
+
+Parameters:
+  MultiAccCodeDeployAppName:
+    Type: String
+    Description: Name of CodeDeploy App
+    Default: ""
+  EnvironmentTag:
+    Type: String
+    Default: ""
+  NameTag:
+    Type: String
+    Default: ""
+
+Resources:
+  MultiAccCodeDeployApp:
+    Type: AWS::CodeDeploy::Application
+    Properties: 
+      ApplicationName: !Ref MultiAccCodeDeployAppName
+      ComputePlatform: Server
+      Tags: 
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Name
+          Value: !Ref NameTag
+
+  CodeDeployDevDeploymentGroup: 
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties: 
+      ApplicationName: !Ref MultiAccCodeDeployApp
+      ServiceRoleArn: !GetAtt [ MultiAcCodeDeployRole, Arn ]      
+      DeploymentGroupName: DevDeploymentGroup
+  MultiAcCodeDeployRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: MultiAcCodeDeployRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codedeploy.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: "CodeDeployAccessPolicy"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ec2:DescribeInstances'
+                  - 'ec2:DescribeInstanceStatus'
+                  - 'ec2:TerminateInstances'
+                  - 'tag:GetTags'
+                  - 'tag:GetResources'
+                  - 'sns:Publish'
+                  - 'cloudwatch:DescribeAlarms'
+                  - 'cloudwatch:PutMetricAlarm'
+                Resource: '*'
+
+Outputs:
+  MultiAcCodeDeployRole:
+    Description: CodeDeploy Service Role Name
+    Value: !Ref MultiAcCodeDeployRole
+    Export:
+      Name: MultiAcCodeDeployRole
+  MultiAccCodeDeployApp:
+    Description: CodeDeploy Application Name
+    Value: !Ref MultiAccCodeDeployApp
+    Export:
+      Name: MultiAccCodeDeployApp

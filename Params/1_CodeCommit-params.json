@@ -1,0 +1,14 @@
+[
+{
+        "ParameterKey": "RepoName",
+        "ParameterValue": "MultiAccCodePipelineRepo"
+},
+{
+        "ParameterKey": "EnvironmentTag",
+        "ParameterValue": "Developement"
+},
+{
+        "ParameterKey": "NameTag",
+        "ParameterValue": "Code commit repo"
+}
+]

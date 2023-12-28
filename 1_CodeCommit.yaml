@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template to Create a CodeCommit Repo
+
+Parameters:
+  RepoName:
+    Type: String
+    Description: Name of CodeCommit Repo
+    Default: ""
+  EnvironmentTag:
+    Type: String
+    Default: ""
+  NameTag:
+    Type: String
+    Default: ""
+
+Resources:
+  MultiAccCodePipelineRepo:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: !Ref RepoName
+      Tags: 
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Name
+          Value: !Ref NameTag
+
+Outputs:
+  MultiAccCodePipelineRepoName: 
+    Description: CodeCommit Repo Name
+    Value: !GetAtt MultiAccCodePipelineRepo.Name
+    Export:
+      Name: MultiAccCodePipelineRepoName
+
+  MultiAccCodePipelineRepoHTTPCloneURL:
+    Description: CodeCommit Repo HTTP Clone URL
+    Value: !GetAtt MultiAccCodePipelineRepo.CloneUrlHttp
+    Export:
+      Name: MultiAccCodePipelineRepoHTTPCloneURL

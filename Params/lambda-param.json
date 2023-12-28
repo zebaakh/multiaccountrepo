@@ -1,0 +1,13 @@
+{ 
+  "Parameters": {
+     "Lambda1FunctionName": "aws-poc-cicd-lambda-1",
+     "Lambda2FunctionName": "aws-poc-cicd-lambda-2",
+     "Lambda3FunctionName": "aws-poc-cicd-lambda-3",
+     "EnvironmentTag": "Developement",
+     "Lambda1Tag": "Lambda 1 function",
+     "Lambda2Tag": "Lambda 2 function",
+     "Lambda3Tag": "Lambda 3 function",
+     "SrcCodeBucket": "multiacartifactbucket",
+     "AccId": "932184789785"
+  }
+}

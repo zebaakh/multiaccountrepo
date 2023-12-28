@@ -1,0 +1,11 @@
+{ 
+  "Parameters": {
+     "Queue1Name": "aws-poc-cicd-queue-1",
+     "Queue2Name": "aws-poc-cicd-queue-2",
+     "Lambda1FunctionName": "aws-poc-cicd-lambda-1",
+     "SourceBucketName": "aws-poc-cicd-src-bucket20231012",
+     "EnvironmentTag": "Developement",
+     "Queue1Tag": "Queue 1 details",
+     "Queue2Tag": "Queue 2 details"
+  }
+}

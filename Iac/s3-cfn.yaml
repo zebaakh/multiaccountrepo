@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Sample CloudFormation template with YAML - S3 Bucket Definition
+Parameters:
+  SourceBucketName:
+    Description: Type of this BacketName.
+    Type: String
+    Default: ""
+
+  DestinationBucketName:
+    Description: Type of this BacketName.
+    Type: String
+    Default: ""
+
+  MetadataBucketName:
+    Description: Type of this BacketName.
+    Type: String
+    Default: ""
+  
+  EnvironmentTag:
+    Type: String
+    Default: ""
+
+  SrcNameTag:
+    Type: String
+    Default: ""
+
+  DestNameTag:
+    Type: String
+    Default: ""
+
+  MetaNameTag:
+    Type: String
+    Default: ""
+    
+Resources:
+  SrcBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref SourceBucketName
+      NotificationConfiguration:
+        QueueConfigurations:
+          - Event: s3:ObjectCreated:*
+            Queue: !ImportValue Queue1Arn    
+      Tags: 
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Name
+          Value: !Ref SrcNameTag
+
+  DestBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref DestinationBucketName
+      Tags: 
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Name
+          Value: !Ref DestNameTag
+  
+  MetadataBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref MetadataBucketName
+      Tags: 
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Name
+          Value: !Ref MetaNameTag
+Outputs:
+  SourceBucketName:
+    Description: Source bucket name
+    Value: !Ref SourceBucketName
+    Export:
+      Name: SourceBucketName 
+
+  # DestinationBucketName:
+  #   Description: Destination bucket name
+  #   Value: !Ref DestinationBucketName
+  #   Export:
+  #     Name: DestinationBucketName
+
+  MetadataBucketName:
+    Description: Metadata bucket name
+    Value: !Ref MetadataBucketName
+    Export:
+      Name: MetadataBucketName
+  
+  MetadataBucket:
+    Description: Metadata bucket resource
+    Value: !Ref MetadataBucket
+    Export:
+      Name: MetadataBucket
+
+  DestBucket:
+    Description: Destination bucket 
+    Value: !Ref DestBucket
+    Export:
+      Name: DestBucket

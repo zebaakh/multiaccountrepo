@@ -1,0 +1,15 @@
+[
+{
+        "ParameterKey": "BucketName",
+        "ParameterValue": "multiacartifactbucket"
+},
+{
+        "ParameterKey": "EnvironmentTag",
+        "ParameterValue": "Developement"
+},
+{
+        "ParameterKey": "NameTag",
+        "ParameterValue": "Pipeline Artifact Bucket"
+
+}
+]

@@ -1,0 +1,122 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template for Lambda Sample.
+Transform: 'AWS::Serverless-2016-10-31'
+Parameters:
+  Lambda1FunctionName:
+    Type: String
+    Default: ""
+    Description: Name for Lambda function 1
+  Lambda2FunctionName:
+    Type: String
+    Default: ""
+    Description: Name for Lambda function 2
+  Lambda3FunctionName:
+    Type: String
+    Default: ""
+    Description: Name for Lambda function 3
+  EnvironmentTag:
+    Type: String
+    Default: ""
+  Lambda1Tag:
+    Type: String
+    Default: ""
+  Lambda2Tag:
+    Type: String
+    Default: ""
+  Lambda3Tag:
+    Type: String
+    Default: ""
+  AccId:
+    Type: String
+    Default: ""
+    Description: Acc Id of bdc
+  SrcCodeBucket:
+    Type: String
+    Default: ""
+  
+
+Resources:
+  Lambda1:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Ref Lambda1FunctionName
+      Handler: lambda_function_1.lambda_handler
+      Runtime: python3.9
+      CodeUri: 
+        Bucket: !Ref SrcCodeBucket
+        Key: 'Source/lambda_function_1.zip'       
+      Description: 'Lambda function-1'
+      MemorySize: 128
+      Timeout: 30
+      #Role: 'arn:aws:iam::932184789785:role/multi-ac-lambda-role'
+      Role: !Sub 'arn:aws:iam::${AccId}:role/multi-ac-lambda-role'
+
+      Environment:
+        Variables:
+          Queue2url: !ImportValue Queue2 
+          Lambda3Name: !Ref Lambda3FunctionName
+      Tags: 
+        Environment: !Ref EnvironmentTag
+        Name: !Ref Lambda1Tag
+
+  Lambda2:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Ref Lambda2FunctionName
+      Handler: lambda_function_2.lambda_handler
+      Runtime: python3.9
+      CodeUri: 
+        Bucket: !Ref SrcCodeBucket
+        Key: 'Source/lambda_function_2.zip'
+      Description: 'Lambda function-2'
+      MemorySize: 128
+      Timeout: 30
+      #Role: 'arn:aws:iam::932184789785:role/multi-ac-lambda-role'
+      Role: !Sub 'arn:aws:iam::${AccId}:role/multi-ac-lambda-role'
+      Environment:
+        Variables:
+          jobname: !ImportValue GlueJob
+          destBucket: !ImportValue DestBucket
+      Tags: 
+        Environment: !Ref EnvironmentTag
+        Name: !Ref Lambda2Tag
+
+  Lambda3:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Ref Lambda3FunctionName
+      Handler: lambda_function_3.lambda_handler
+      Runtime: python3.9
+      CodeUri: 
+        Bucket: !Ref SrcCodeBucket
+        Key: 'Source/lambda_function_3.zip'
+      Description: 'Lambda function-3'
+      MemorySize: 128
+      Timeout: 30
+      #Role: 'arn:aws:iam::932184789785:role/multi-ac-lambda-role'
+      Role: !Sub 'arn:aws:iam::${AccId}:role/multi-ac-lambda-role'
+      Environment:
+        Variables:
+          destBucket: !ImportValue DestBucket
+      Tags: 
+        Environment: !Ref EnvironmentTag
+        Name: !Ref Lambda3Tag
+
+Outputs:
+  Lambda1:
+    Description: Lambda function 1 name
+    Value: !Ref Lambda1
+    Export:
+      Name: Lambda1 
+      
+  Lambda2:
+    Description: Lambda function2 name
+    Value: !Ref Lambda2
+    Export:
+      Name: Lambda2
+
+  Lambda3:
+    Description: Lambda function3 name
+    Value: !Ref Lambda3
+    Export:
+      Name: Lambda3

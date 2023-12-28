@@ -1,0 +1,45 @@
+version: 0.1
+phases:
+  install:
+    commands:
+      - aws cloudformation package --template-file Iac/sqs-cfn.yaml --s3-bucket multiacartifactbucket --output-template-file outputsqstemplate.yaml
+      - aws cloudformation package --template-file Iac/s3-cfn.yaml --s3-bucket multiacartifactbucket --output-template-file outputs3template.yaml
+      - aws cloudformation package --template-file Iac/glue-cfn.yaml --s3-bucket multiacartifactbucket --output-template-file outputgluetemplate.yaml      
+      - aws cloudformation package --template-file Iac/lambda-cfn.yaml --s3-bucket multiacartifactbucket --output-template-file outputlambdatemplate.yaml      
+      - aws cloudformation package --template-file Iac/event-source-maping-cfn.yaml --s3-bucket multiacartifactbucket --output-template-file outputmapingtemplate.yaml      
+      - aws cloudformation package --template-file Iac/athena-cfn.yaml --s3-bucket multiacartifactbucket --output-template-file outputathenatemplate.yaml
+      - zip -r lambda_function_1.zip lambda_function_1.py
+      - aws s3 cp lambda_function_1.zip s3://multiacartifactbucket/Source/
+      - zip -r lambda_function_2.zip lambda_function_2.py
+      - aws s3 cp lambda_function_2.zip s3://multiacartifactbucket/Source/
+      - zip -r lambda_function_3.zip lambda_function_3.py
+      - aws s3 cp lambda_function_3.zip s3://multiacartifactbucket/Source/
+artifacts:
+  type: zip
+  files:
+    - Iac/sqs-cfn.yaml
+    - outputsqstemplate.yaml
+    - Params/sqs-param.json
+    
+    - Iac/s3-cfn.yaml
+    - outputs3template.yaml
+    - Params/s3-param.json
+
+    - Iac/glue-cfn.yaml
+    - outputgluetemplate.yaml
+    - Params/glue-param.json
+
+    - Iac/lambda-cfn.yaml
+    - outputlambdatemplate.yaml
+    - Params/lambda-param.json
+
+    - Iac/event-source-maping-cfn.yaml
+    - outputmapingtemplate.yaml
+
+    - Iac/athena-cfn.yaml
+    - outputathenatemplate.yaml
+    - Params/athena-param.json
+
+    - lambda_function_1.zip
+    - lambda_function_2.zip
+    - lambda_function_3.zip

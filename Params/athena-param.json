@@ -1,0 +1,7 @@
+{ 
+  "Parameters": {
+     "AthenaWorkGroupName": "aws-poc-cicd-athena-workgroup1",
+     "EnvironmentTag": "Developement",
+     "NameTag": "Athena work group"
+  }
+}

@@ -1,0 +1,11 @@
+{ 
+  "Parameters": {
+     "SourceBucketName": "aws-poc-cicd-src-bucket20231012",
+     "DestinationBucketName": "aws-poc-cicd-dest-bucket20231012",
+     "MetadataBucketName": "aws-poc-cicd-metadata-bucket20231012",
+     "EnvironmentTag": "Developement",
+     "SrcNameTag": "Src input files bucket",
+     "DestNameTag": "Dest output files bucket ",
+     "MetaNameTag": "metadata bucket"
+  }
+}
